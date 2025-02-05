@@ -4,10 +4,10 @@ import sys
 
 # Ensure a script name is provided
 if len(sys.argv) < 2:
-    print("Usage: python manage.py [scriptname.py]")
+    print("Usage: python manage.py [scriptname]")
     sys.exit(1)
 
-script_name = sys.argv[1]  # Get script name from command line
+script_name = f"{sys.argv[1]}.py"  # Get script name from command line
 
 # Get absolute paths
 parent_dir = os.path.abspath(os.path.dirname(__file__))  # Parent directory
