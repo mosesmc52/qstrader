@@ -8,6 +8,21 @@ QSTrader can be best described as a loosely-coupled collection of modules for ca
 # Installation
 
 
+# Backtesting
+__**Step 0: Ingest Data **__
+Copy Tickers into tickers folder using the following format
+[Ticker Symbol], [Start Date], [End Date]
+
+
+Run the following command
+```
+python ingest.py tickers.txt
+```
+
+__**Step 1: Run Script **__
+```
+python run.py [script name]
+```
 
 
 # License Terms
