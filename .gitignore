@@ -8,6 +8,7 @@ cover
 # environment
 env/
 venv/
+data/
 
 # Packages
 *.egg
