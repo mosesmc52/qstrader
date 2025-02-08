@@ -49,4 +49,5 @@ class SimulatedExchange(Exchange):
         """
         if dt.weekday() > 4:
             return False
+
         return self.open_dt <= dt.time() and dt.time() < self.close_dt

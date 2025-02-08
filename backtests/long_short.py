@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     # Construct an Alpha Model that simply provides
     # static allocations to a universe of assets
-    # In this case 100% TLT ETF, -70% IEI ETF,
+    # In this case long 100% TLT ETF, short -70% IEI ETF,
     # rebalanced at the end of each month, leveraged 5x
     strategy_alpha_model = FixedSignalsAlphaModel({"EQ:TLT": 1.0, "EQ:IEI": -0.7})
     strategy_backtest = BacktestTradingSession(

@@ -38,7 +38,8 @@ class AssetPriceBuffers(object):
         `str`
             The lookup key.
         """
-        return '%s_%s' % (asset, lookback)
+
+        return "%s_%s" % (asset, lookback)
 
     def _create_single_asset_prices_buffer_dict(self, asset):
         """
@@ -51,9 +52,9 @@ class AssetPriceBuffers(object):
             The price buffer dictionary.
         """
         return {
-            AssetPriceBuffers._asset_lookback_key(
-                asset, lookback
-            ): deque(maxlen=lookback)
+            AssetPriceBuffers._asset_lookback_key(asset, lookback): deque(
+                maxlen=lookback
+            )
             for lookback in self.lookbacks
         }
 
@@ -70,6 +71,7 @@ class AssetPriceBuffers(object):
         prices = {}
         for asset in self.assets:
             prices.update(self._create_single_asset_prices_buffer_dict(asset))
+
         return prices
 
     def add_asset(self, asset):
@@ -86,7 +88,7 @@ class AssetPriceBuffers(object):
         if asset in self.assets:
             raise ValueError(
                 'Unable to add asset "%s" since it already '
-                'exists in this price buffer.' % asset
+                "exists in this price buffer." % asset
             )
         else:
             self.prices.update(self._create_single_asset_prices_buffer_dict(asset))
@@ -112,13 +114,13 @@ class AssetPriceBuffers(object):
         # The asset may have been added to the universe subsequent
         # to the beginning of the backtest and as such needs a
         # newly created pricing buffer
-        asset_lookback_key = AssetPriceBuffers._asset_lookback_key(asset, self.lookbacks[0])
+        asset_lookback_key = AssetPriceBuffers._asset_lookback_key(
+            asset, self.lookbacks[0]
+        )
         if asset_lookback_key not in self.prices:
             self.prices.update(self._create_single_asset_prices_buffer_dict(asset))
 
         for lookback in self.lookbacks:
-            self.prices[
-                AssetPriceBuffers._asset_lookback_key(
-                    asset, lookback
-                )
-            ].append(price)
+            self.prices[AssetPriceBuffers._asset_lookback_key(asset, lookback)].append(
+                price
+            )

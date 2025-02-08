@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-
 from qstrader.signals.signal import Signal
 
 
@@ -46,7 +45,7 @@ class MomentumSignal(Signal):
         `str`
             The lookup key.
         """
-        return '%s_%s' % (asset, lookback + 1)
+        return "%s_%s" % (asset, lookback + 1)
 
     def _cumulative_return(self, asset, lookback):
         """
@@ -66,6 +65,7 @@ class MomentumSignal(Signal):
         `float`
             The cumulative return ('momentum') for the period.
         """
+
         series = pd.Series(
             self.buffers.prices[MomentumSignal._asset_lookback_key(asset, lookback)]
         )
@@ -93,4 +93,5 @@ class MomentumSignal(Signal):
         `float`
             The momentum for the period.
         """
+
         return self._cumulative_return(asset, lookback)
