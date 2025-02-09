@@ -44,7 +44,9 @@ class STDReturnsCollectionSignal(Signal):
 
         std_ret = {}
         for asset in assets:
-            series = pd.Series(self.buffers.prices[self._asset_lookback_key(asset)])[1:]
+            series = pd.Series(self.buffers.prices[self._asset_lookback_key(asset)])[
+                :-1
+            ]
             returns = self.calculate_returns(series)
             std_ret[asset] = self.compute_std_returns(returns)
 

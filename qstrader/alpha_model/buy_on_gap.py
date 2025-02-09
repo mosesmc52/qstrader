@@ -54,7 +54,9 @@ class BuyOnGapAlphaModel(AlphaModel):
                 accepted_gap[asset] = return_gap
 
         if len(accepted_gap):
-            accepted_gap_sorted = dict(sorted(accepted_gap.items())[:10])
+            accepted_gap_sorted = dict(
+                sorted(accepted_gap.items(), key=lambda item: item[1])[:10]
+            )
 
             weight = 1.0 / len(accepted_gap_sorted)
 

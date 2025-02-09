@@ -38,7 +38,10 @@ class MACollectionSignal(Signal):
 
         ma = {}
         for asset in assets:
-            series = pd.Series(self.buffers.prices[self._asset_lookback_key(asset)])[1:]
+
+            series = pd.Series(self.buffers.prices[self._asset_lookback_key(asset)])[
+                :-1
+            ]
             ma[asset] = series.mean()
 
         return ma
