@@ -10,8 +10,8 @@ class BacktestDataHandler(object):
 
     def get_asset_latest_bid_price(self, dt, asset_symbol):
         """ """
-        # TODO: Check for asset in Universe
         bid = np.nan
+
         for ds in self.data_sources:
             try:
                 bid = ds.get_bid(dt, asset_symbol)
@@ -23,7 +23,6 @@ class BacktestDataHandler(object):
 
     def get_asset_latest_ask_price(self, dt, asset_symbol):
         """ """
-        # TODO: Check for asset in Universe
         ask = np.nan
         for ds in self.data_sources:
             try:
@@ -36,12 +35,6 @@ class BacktestDataHandler(object):
 
     def get_asset_latest_bid_ask_price(self, dt, asset_symbol):
         """ """
-        # TODO: For the moment this is sufficient for OHLCV
-        # data, which only usually provides mid prices
-        # This will need to be revisited when handling intraday
-        # bid/ask time series.
-        # It has been added as an optimisation mechanism for
-        # interday backtests.
         bid = self.get_asset_latest_bid_price(dt, asset_symbol)
         return (bid, bid)
 
@@ -51,9 +44,45 @@ class BacktestDataHandler(object):
         try:
             mid = (bid_ask[0] + bid_ask[1]) / 2.0
         except Exception:
-            # TODO: Log this
             mid = np.nan
         return mid
+
+    def get_asset_latest_high_price(self, dt, asset_symbol):
+        """Retrieve the latest high price for an asset."""
+        high = np.nan
+        for ds in self.data_sources:
+            try:
+                high = ds.get_high(dt, asset_symbol)
+                if not np.isnan(high):
+                    return high
+            except Exception:
+                high = np.nan
+        return high
+
+    def get_asset_latest_low_price(self, dt, asset_symbol):
+        """Retrieve the latest low price for an asset."""
+        low = np.nan
+        for ds in self.data_sources:
+            try:
+                low = ds.get_low(dt, asset_symbol)
+                if not np.isnan(low):
+                    return low
+            except Exception:
+                low = np.nan
+        return low
+
+    def get_asset_latest_open_price(self, dt, asset_symbol):
+        """Retrieve the latest open price for an asset."""
+        open = np.nan
+        for ds in self.data_sources:
+            try:
+
+                open = ds.get_open(dt, asset_symbol)
+                if not np.isnan(open):
+                    return open
+            except Exception:
+                open = np.nan
+        return open
 
     def get_assets_historical_range_close_price(
         self, start_dt, end_dt, asset_symbols, adjusted=False

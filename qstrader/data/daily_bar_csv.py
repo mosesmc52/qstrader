@@ -41,6 +41,24 @@ class CSVDailyBarDataSource(object):
         self.asset_bar_frames = self._load_csvs_into_dfs()
         self.asset_bid_ask_frames = self._convert_bars_into_bid_ask_dfs()
 
+    @functools.lru_cache(maxsize=1024 * 1024)
+    def get_high(self, dt, asset):
+        bar_df = self.asset_bar_frames[asset]
+        high_series = bar_df.iloc[bar_df.index.get_indexer([dt], method="pad")]["High"]
+        return high_series.iloc[0] if not high_series.empty else np.nan
+
+    @functools.lru_cache(maxsize=1024 * 1024)
+    def get_low(self, dt, asset):
+        bar_df = self.asset_bar_frames[asset]
+        low_series = bar_df.iloc[bar_df.index.get_indexer([dt], method="pad")]["Low"]
+        return low_series.iloc[0] if not low_series.empty else np.nan
+
+    @functools.lru_cache(maxsize=1024 * 1024)
+    def get_open(self, dt, asset):
+        bar_df = self.asset_bar_frames[asset]
+        low_series = bar_df.iloc[bar_df.index.get_indexer([dt], method="pad")]["Open"]
+        return low_series.iloc[0] if not low_series.empty else np.nan
+
     def _obtain_asset_csv_files(self):
         """
         Obtain the list of all CSV filenames in the CSV directory.
@@ -71,26 +89,16 @@ class CSVDailyBarDataSource(object):
         return "EQ:%s" % csv_file.replace(".csv", "")
 
     def _load_csv_into_df(self, csv_file):
-        """
-        Loads the CSV file into a Pandas DataFrame with dates parsed,
-        sorted on datetime localised to UTC.
-
-        Parameters
-        ----------
-        csv_file : `str`
-            The name of the CSV file.
-
-        Returns
-        -------
-        `pd.DataFrame`
-            DataFrame of the CSV file with timestamps localised to UTC.
-        """
         csv_df = pd.read_csv(
             os.path.join(self.csv_dir, csv_file), index_col="Date", parse_dates=True
         ).sort_index()
 
         # Ensure all timestamps are set to UTC for consistency
         csv_df = csv_df.set_index(csv_df.index.tz_convert(pytz.UTC))
+
+        # Keep only necessary columns
+        csv_df = csv_df[["Open", "High", "Low", "Close", "Adj Close"]]
+
         return csv_df
 
     def _load_csvs_into_dfs(self):
@@ -122,25 +130,8 @@ class CSVDailyBarDataSource(object):
         return asset_frames
 
     def _convert_bar_frame_into_bid_ask_df(self, bar_df):
-        """
-        Converts the DataFrame from daily OHLCV 'bars' into a DataFrame
-        of open and closing price timestamps.
-
-        Optionally adjusts the open/close prices for corporate actions
-        using any provided 'Adjusted Close' column.
-
-        Parameters
-        ----------
-        `pd.DataFrame`
-            The daily 'bar' OHLCV DataFrame.
-
-        Returns
-        -------
-        `pd.DataFrame`
-            The individually-timestamped open/closing prices, optionally
-            adjusted for corporate actions.
-        """
         bar_df = bar_df.sort_index()
+
         if self.adjust_prices:
             if "Adj Close" not in bar_df.columns:
                 raise ValueError(
@@ -148,34 +139,43 @@ class CSVDailyBarDataSource(object):
                     "Prices cannot be adjusted. Exiting."
                 )
 
-            # Restrict solely to the open/closing prices
-            oc_df = bar_df.loc[:, ["Open", "Close", "Adj Close"]]
+            bar_df["Adj Open"] = (bar_df["Adj Close"] / bar_df["Close"]) * bar_df[
+                "Open"
+            ]
+            bar_df["Adj High"] = (bar_df["Adj Close"] / bar_df["Close"]) * bar_df[
+                "High"
+            ]
+            bar_df["Adj Low"] = (bar_df["Adj Close"] / bar_df["Close"]) * bar_df["Low"]
 
-            # Adjust opening prices
-            oc_df["Adj Open"] = (oc_df["Adj Close"] / oc_df["Close"]) * oc_df["Open"]
-            oc_df = oc_df.loc[:, ["Adj Open", "Adj Close"]]
-            oc_df.columns = ["Open", "Close"]
+            bar_df = bar_df[["Adj Open", "Adj High", "Adj Low", "Adj Close"]]
+            bar_df.columns = ["Open", "High", "Low", "Close"]
         else:
-            oc_df = bar_df.loc[:, ["Open", "Close"]]
+            bar_df = bar_df[["Open", "High", "Low", "Close"]]
 
-        # Convert bars into separate rows for open/close prices
-        # appropriately timestamped
-        seq_oc_df = oc_df.T.unstack(level=0).reset_index()
-        seq_oc_df.columns = ["Date", "Market", "Price"]
-        seq_oc_df.loc[seq_oc_df["Market"] == "Open", "Date"] += pd.Timedelta(
+        seq_df = bar_df.T.unstack(level=0).reset_index()
+        seq_df.columns = ["Date", "Market", "Price"]
+
+        # Timestamping Open, High, Low, Close
+        seq_df.loc[seq_df["Market"] == "Open", "Date"] += pd.Timedelta(
             hours=14, minutes=30
         )
-        seq_oc_df.loc[seq_oc_df["Market"] == "Close", "Date"] += pd.Timedelta(
-            hours=21, minutes=00
+        seq_df.loc[seq_df["Market"] == "High", "Date"] += pd.Timedelta(
+            hours=17, minutes=0
+        )
+        seq_df.loc[seq_df["Market"] == "Low", "Date"] += pd.Timedelta(
+            hours=19, minutes=0
+        )
+        seq_df.loc[seq_df["Market"] == "Close", "Date"] += pd.Timedelta(
+            hours=21, minutes=0
         )
 
-        # TODO: Unable to distinguish between Bid/Ask, implement later
-        dp_df = seq_oc_df[["Date", "Price"]]
+        dp_df = seq_df[["Date", "Price"]]
         dp_df["Bid"] = dp_df["Price"]
         dp_df["Ask"] = dp_df["Price"]
         dp_df = (
             dp_df.loc[:, ["Date", "Bid", "Ask"]].ffill().set_index("Date").sort_index()
         )
+
         return dp_df
 
     def _convert_bars_into_bid_ask_dfs(self):
