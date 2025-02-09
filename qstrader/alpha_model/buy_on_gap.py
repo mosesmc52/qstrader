@@ -58,7 +58,7 @@ class BuyOnGapAlphaModel(AlphaModel):
                 sorted(accepted_gap.items(), key=lambda item: item[1])[:10]
             )
 
-            weight = 1.0 / len(accepted_gap_sorted)
+            weight = 1.0 / len(asset)
 
             for asset, _ in accepted_gap_sorted.items():
                 weights[asset] = weight
@@ -69,6 +69,6 @@ class BuyOnGapAlphaModel(AlphaModel):
         assets = self.universe.get_assets(dt)
         weights = {asset: 0.0 for asset in assets}
 
-        if self.signals.warmup >= self.std_lookback:
+        if self.signals.warmup >= max(self.std_lookback, self.ma_lookback):
             weights = self._generate_signals(dt, assets, weights)
         return weights

@@ -14,8 +14,8 @@ from qstrader.statistics.tearsheet import TearsheetStatistics
 from qstrader.trading.backtest import BacktestTradingSession
 
 if __name__ == "__main__":
-    start_dt = pd.Timestamp("2007-01-31 14:30:00", tz=pytz.UTC)
-    end_dt = pd.Timestamp("2009-01-01 23:59:00", tz=pytz.UTC)
+    start_dt = pd.Timestamp("2012-01-31 14:30:00", tz=pytz.UTC)
+    end_dt = pd.Timestamp("2013-01-01 23:59:00", tz=pytz.UTC)
 
     # Construct the symbols and assets necessary for the backtest
     strategy_symbols = [
