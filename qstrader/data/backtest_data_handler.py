@@ -84,15 +84,13 @@ class BacktestDataHandler(object):
                 open = np.nan
         return open
 
-    def get_assets_historical_range_close_price(
-        self, start_dt, end_dt, asset_symbols, adjusted=False
-    ):
+    def get_assets_historical_range_close_price(self, start_dt, end_dt, asset_symbols):
         """ """
         prices_df = None
         for ds in self.data_sources:
             try:
                 prices_df = ds.get_assets_historical_closes(
-                    start_dt, end_dt, asset_symbols, adjusted=adjusted
+                    start_dt, end_dt, asset_symbols
                 )
                 if prices_df is not None:
                     return prices_df
