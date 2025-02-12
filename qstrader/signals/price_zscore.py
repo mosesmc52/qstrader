@@ -15,8 +15,7 @@ class PriceZScoreSignal(Signal):
         self.lookback = lookback
         super().__init__(start_dt, universe, [lookback])
 
-    @staticmethod
-    def _asset_lookback_key(asset, lookback):
+    def _asset_lookback_key(asset):
         """
         Create the buffer dictionary lookup key based
         on asset name and lookback period.
@@ -33,21 +32,13 @@ class PriceZScoreSignal(Signal):
         `str`
             The lookup key.
         """
-        return "%s_%s" % (asset, lookback)
+        return "%s_%s" % (asset, self.lookback)
 
     def _z_score(self, assets, lookback):
 
-        X_prices = pd.Series(
-            self.buffers.prices[
-                PriceZScoreSignal._asset_lookback_key(assets[0], self.lookback)
-            ]
-        )
+        X_prices = pd.Series(self.buffers.prices[self._asset_lookback_key(assets[0])])
 
-        Y_prices = pd.Series(
-            self.buffers.prices[
-                PriceZScoreSignal._asset_lookback_key(assets[1], self.lookback)
-            ]
-        )
+        Y_prices = pd.Series(self.buffers.prices[self._asset_lookback_key(assets[1])])
 
         X = sm.add_constant(X_prices)
         model = sm.OLS(Y_prices, X).fit()

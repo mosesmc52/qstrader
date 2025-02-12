@@ -1,16 +1,14 @@
 import numpy as np
 import pandas as pd
-import statsmodels.api as sm
 from qstrader.signals.signal import Signal
 
 
-class STDReturnsCollectionSignal(Signal):
+class StatArbPositionCollection(Signal):
 
     def __init__(
         self,
         start_dt,
         universe,
-        train_len,
         lookback,
     ):
         self.lookback = lookback
@@ -35,27 +33,26 @@ class STDReturnsCollectionSignal(Signal):
         """
         return "%s_%s" % (asset, self.lookback)
 
-    def calculate_returns(self, arr):
-        return pd.DataFrame(arr).pct_change().values
+    def _calc_positions(self, assets, weights):
 
-    def compute_std_returns(self, returns):
-        return np.nanstd(returns, ddof=1)  # Use ddof=1 for sample standard deviation
+        Y_plus = []
 
-    def _calc_std(self, assets):
-
-        std_ret = {}
         for asset in assets:
-            series = pd.Series(self.buffers.prices[self._asset_lookback_key(asset)])[
-                :-1
-            ]
-            returns = self.calculate_returns(series)
-            std_ret[asset] = self.compute_std_returns(returns)
+            Y_plus.append(
+                pd.Series(np.log(self.buffers.prices[self._asset_lookback_key(asset)]))
+            )
 
-        return std_ret
+        log_mkt_val = np.sum(weights * np.column_stack(Y_plus), axis=1)
+        num_units = -(log_mkt_val[-1:] - log_mkt_val.mean()) / log_mkt_val.std()
+        positions = weights * num_units[0]
 
-    def __call__(self, assets):
+        return positions
+
+    def __call__(self, assets, weights):
         """
-        Calculate the z-score for the asset.
+        For a collection of assets, calculate the johansen weight and use the weight to calculate the
+        log zscore.
         """
-
-        return self._calc_std(assets)
+        if not len(assets):
+            return []
+        return self._calc_positions(assets, weights)
